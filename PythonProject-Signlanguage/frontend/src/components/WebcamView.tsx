@@ -26,7 +26,7 @@ const WebcamView: React.FC = () => {
           autoPlay
           playsInline
           muted
-          className="w-full h-full object-cover"
+          className="w-full h-full object-cover rounded-lg border-4 border-[#5C7C89]"
         />
       </div>
     </div>

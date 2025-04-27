@@ -25,7 +25,7 @@ const WebcamDetection = () => {
   useEffect(() => {
     const interval = setInterval(() => {
       captureAndSendFrame();
-    }, 500); // 0.5 seconds
+    }, 500); // Every 0.5 seconds
 
     return () => clearInterval(interval);
   }, []);
@@ -51,28 +51,59 @@ const WebcamDetection = () => {
       if (data.prediction) setPrediction(data.prediction);
       if (data.confidence !== undefined) setConfidence(`${data.confidence}%`);
     } catch (error) {
-      console.error('Error sending frame:', error);
+      console.error('Error sending frame to backend:', error);
     }
   };
 
   return (
-    <div style={{ display: 'flex', justifyContent: 'space-around', alignItems: 'flex-start', padding: '20px' }}>
-      {/* Left Side: Outputs */}
-      <div style={{ backgroundColor: 'white', color: 'black', padding: '20px', borderRadius: '10px', width: '300px' }}>
-        <h2>Detected Output:</h2>
-        <p style={{ fontSize: '24px', fontWeight: 'bold' }}>{prediction}</p>
+    <div style={{
+      display: 'flex',
+      justifyContent: 'center',
+      alignItems: 'flex-start',
+      gap: '40px',
+      padding: '30px',
+      flexWrap: 'wrap'
+    }}>
 
-        <h2>Confidence Detected:</h2>
-        <p style={{ fontSize: '20px' }}>{confidence}</p>
+      {/* Left Side: Detection Output */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        color: '#011425',
+        padding: '25px',
+        borderRadius: '16px',
+        width: '320px',
+        boxShadow: '0 6px 16px rgba(0, 0, 0, 0.12)',
+        textAlign: 'center'
+      }}>
+        <h2 style={{ fontSize: '22px', marginBottom: '20px', color: '#242424' }}>Detected Output:</h2>
+        <p style={{ fontSize: '36px', fontWeight: 'bold', color: '#1F4959', margin: '10px 0' }}>{prediction}</p>
 
-        <h2>Accuracy Detected:</h2>
-        <p style={{ fontSize: '20px' }}>{confidence}</p>
+        <h2 style={{ fontSize: '22px', marginTop: '30px', marginBottom: '20px', color: '#242424' }}>Confidence Detected:</h2>
+        <p style={{ fontSize: '28px', color: '#5C7C89', margin: '10px 0' }}>{confidence}</p>
       </div>
 
-      {/* Right Side: Camera */}
-      <div>
-        <video ref={videoRef} autoPlay playsInline muted width="400" height="400" style={{ borderRadius: '10px' }} />
+      {/* Right Side: Webcam */}
+      <div style={{
+        backgroundColor: '#FFFFFF',
+        padding: '10px',
+        borderRadius: '16px',
+        boxShadow: '0 6px 16px rgba(0, 0, 0, 0.12)',
+        border: '4px solid #1F4959'
+      }}>
+        <video
+          ref={videoRef}
+          autoPlay
+          playsInline
+          muted
+          width="420"
+          height="420"
+          style={{
+            borderRadius: '12px',
+            backgroundColor: '#FFFFFF'
+          }}
+        />
       </div>
+
     </div>
   );
 };
