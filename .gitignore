@@ -1,0 +1,10 @@
+# Ignore Python environment folders
+.venv/
+__pycache__/
+
+# Ignore Node modules
+node_modules/
+
+# Ignore system files
+.DS_Store
+Thumbs.db
