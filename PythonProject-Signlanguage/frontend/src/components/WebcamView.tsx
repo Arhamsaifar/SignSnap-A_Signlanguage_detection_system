@@ -1,6 +1,7 @@
 import React from 'react';
 import { useWebcam } from '../hooks/useWebcam';
 import { useDetection } from '../context/DetectionContext';
+import { motion } from 'framer-motion'; // NEW: Import motion
 
 const WebcamView: React.FC = () => {
   const { videoRef } = useWebcam();
@@ -8,18 +9,28 @@ const WebcamView: React.FC = () => {
 
   if (!isDetecting) {
     return (
-      <div className="bg-white rounded-lg shadow-md p-6 flex items-center justify-center aspect-square">
+      <motion.div
+        initial={{ y: 30, opacity: 0 }}
+        animate={{ y: 0, opacity: 1 }}
+        transition={{ duration: 0.8 }}
+        className="bg-[#1F4959] rounded-lg shadow-lg p-6 flex items-center justify-center aspect-square text-white"
+      >
         <div className="text-center">
-          <p className="text-gray-500 mb-2">Camera inactive</p>
-          <p className="text-sm text-gray-400">Press the Start Detection button to activate</p>
+          <p className="mb-2">Camera inactive</p>
+          <p className="text-sm">Press the Start Detection button to activate</p>
         </div>
-      </div>
+      </motion.div>
     );
   }
 
   return (
-    <div className="bg-white rounded-lg shadow-md p-6">
-      <h3 className="text-sm font-medium text-gray-500 mb-3">Camera Feed</h3>
+    <motion.div
+      initial={{ y: 30, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.8 }}
+      className="bg-[#1F4959] rounded-lg shadow-lg p-6 text-white"
+    >
+      <h3 className="text-sm font-medium mb-3">Camera Feed</h3>
       <div className="rounded-lg overflow-hidden bg-gray-900 aspect-square">
         <video
           ref={videoRef}
@@ -29,7 +40,7 @@ const WebcamView: React.FC = () => {
           className="w-full h-full object-cover rounded-lg border-4 border-[#5C7C89]"
         />
       </div>
-    </div>
+    </motion.div>
   );
 };
 
