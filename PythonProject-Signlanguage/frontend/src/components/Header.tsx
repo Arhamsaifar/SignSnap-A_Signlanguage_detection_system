@@ -1,28 +1,47 @@
-import React from 'react';
+import React from "react";
+import { HandHelping } from "lucide-react";
 
-const Header: React.FC = () => {
+export default function Header() {
   return (
-    <header className="flex items-center p-4" style={{ backgroundColor: '#1F4959' }}>
-      <div className="flex items-center space-x-4">
-        {/* Logo */}
-        <div className="p-1 bg-white rounded-2xl shadow-lg">
-          <img
-            src="/logo.webp"
-            alt="SignSnap Logo"
-            className="h-14 w-14 object-cover rounded-xl"
-          />
+    <header className="tech-background py-6 px-4 sm:px-6 lg:px-8 border-b border-primary/30">
+      <div className="container mx-auto">
+        <div className="flex flex-col sm:flex-row justify-between items-center">
+          <div className="flex items-center mb-4 sm:mb-0 animate-float">
+            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center mr-3 shine-effect">
+              <HandHelping className="text-background h-5 w-5" />
+            </div>
+            <h1 className="text-2xl font-bold tracking-tight">
+              <span className="text-white">Sign</span>
+              <span className="text-primary">Snap</span>
+            </h1>
+          </div>
+          
+          <nav className="flex space-x-4">
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors animate-fadeIn" style={{ animationDelay: '0.1s' }}>
+              About
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors animate-fadeIn" style={{ animationDelay: '0.2s' }}>
+              Docs
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+              API
+            </a>
+            <a href="#" className="text-muted-foreground hover:text-primary transition-colors animate-fadeIn" style={{ animationDelay: '0.4s' }}>
+              Support
+            </a>
+          </nav>
         </div>
-
-        {/* Text next to logo */}
-        <div>
-          <h1 className="text-3xl font-bold" style={{ color: '#FFFFFF' }}>SignSnap</h1>
-          <p className="text-sm italic font-semibold" style={{ color: '#5C7C89' }}>
-            Bridging communication through the power of SignLanguage
+        
+        <div className="mt-10 max-w-3xl mx-auto text-center">
+          <h2 className="text-xl sm:text-3xl font-bold mb-4 animate-fadeIn border-glow inline-block p-4 rounded-lg">
+            AI-Powered Sign Language Detection Tool
+          </h2>
+          <p className="text-muted-foreground text-sm sm:text-base animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+            Bridging communication gaps with real-time sign language detection. Perfect for designers 
+            and developers to integrate accessibility features into products.
           </p>
         </div>
       </div>
     </header>
   );
-};
-
-export default Header;
+}

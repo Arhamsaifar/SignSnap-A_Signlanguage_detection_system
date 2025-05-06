@@ -1,30 +1,62 @@
-import { useRef } from "react";
+import { useState, useEffect, RefObject } from "react";
+import Webcam from "react-webcam";
 
-export const useWebcam = () => {
-  const videoRef = useRef<HTMLVideoElement | null>(null);
+export function useWebcam(webcamRef: RefObject<Webcam>) {
+  const [hasPermission, setHasPermission] = useState<boolean>(false);
+  const [isLoading, setIsLoading] = useState<boolean>(true);
+  const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
-  const startWebcam = async () => {
-    try {
-      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-      if (videoRef.current) {
-        videoRef.current.srcObject = stream;
+  useEffect(() => {
+    async function requestWebcamPermission() {
+      setIsLoading(true);
+      try {
+        const stream = await navigator.mediaDevices.getUserMedia({ 
+          video: true,
+          audio: false 
+        });
+        
+        // If we got here, permission was granted
+        setHasPermission(true);
+        setErrorMessage(null);
+        
+        // Clean up function to stop the stream when component unmounts
+        return () => {
+          stream.getTracks().forEach(track => track.stop());
+        };
+      } catch (err) {
+        console.error("Webcam access error:", err);
+        setHasPermission(false);
+        
+        if (err instanceof DOMException) {
+          if (err.name === "NotAllowedError") {
+            setErrorMessage("Camera access denied. Please allow camera access and refresh the page.");
+          } else if (err.name === "NotFoundError") {
+            setErrorMessage("No camera detected. Please connect a camera and refresh the page.");
+          } else {
+            setErrorMessage(`Camera error: ${err.message}`);
+          }
+        } else {
+          setErrorMessage("An unknown error occurred accessing the camera.");
+        }
+      } finally {
+        setIsLoading(false);
       }
-    } catch (error) {
-      console.error("Error accessing webcam:", error);
     }
-  };
 
-  const stopWebcam = () => {
-    if (videoRef.current && videoRef.current.srcObject) {
-      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
-      tracks.forEach(track => track.stop());
-      videoRef.current.srcObject = null;
+    requestWebcamPermission();
+  }, []);
+
+  const captureImage = (): string | null => {
+    if (webcamRef.current) {
+      return webcamRef.current.getScreenshot();
     }
+    return null;
   };
 
   return {
-    videoRef,
-    startWebcam,
-    stopWebcam
+    hasPermission,
+    isLoading,
+    errorMessage,
+    captureImage
   };
-};
+}

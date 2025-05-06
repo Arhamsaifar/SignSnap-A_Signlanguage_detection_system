@@ -1,13 +1,18 @@
-import React from 'react';
-import Layout from './components/Layout';
-import { DetectionProvider } from './context/DetectionContext';
+import { Switch, Route } from "wouter";
+import Home from "@/pages/Home";
+import NotFound from "@/pages/not-found";
+
+function Router() {
+  return (
+    <Switch>
+      <Route path="/" component={Home} />
+      <Route component={NotFound} />
+    </Switch>
+  );
+}
 
 function App() {
-  return (
-    <DetectionProvider>
-      <Layout />
-    </DetectionProvider>
-  );
+  return <Router />;
 }
 
 export default App;
