@@ -1,6 +1,24 @@
-node_modules
-dist
+# Node-related (frontend)
+node_modules/
+dist/
+*.tar.gz
 .DS_Store
 server/public
 vite.config.ts.*
-*.tar.gz
+
+# Python-related (backend)
+__pycache__/
+*.py[cod]
+*.pyo
+*.pyd
+*.env
+.venv/
+env/
+*.sqlite3
+*.log
+
+# IDE and OS
+.idea/
+.vscode/
+*.swp
+Thumbs.db
