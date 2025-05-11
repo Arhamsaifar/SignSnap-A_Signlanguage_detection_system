@@ -1,8 +1,10 @@
 import { useState, useEffect, useCallback, useRef } from "react";
-import { apiRequest } from "@/lib/queryClient";
-import { queryClient } from "@/lib/queryClient";
-import { useToast } from "@/hooks/use-toast";
-import { DetectionResult, MetricsData } from "@shared/schema";
+
+interface DetectionResult {
+  sign: string;
+  confidence: number;
+  timestamp: Date;
+}
 
 interface DetectionOptions {
   showConfidence: boolean;
@@ -12,155 +14,162 @@ interface DetectionOptions {
   confidenceThreshold: number;
 }
 
+interface MetricsData {
+  accuracy: number;
+  confidence: number;
+  speed: number;
+  errorRate: number;
+}
+
 export function useSignDetection() {
-  const [isDetecting, setIsDetecting] = useState<boolean>(false);
+  const [isDetecting, setIsDetecting] = useState(false);
   const [detectedSign, setDetectedSign] = useState<string | null>(null);
   const [detectionHistory, setDetectionHistory] = useState<DetectionResult[]>([]);
-  const [sessionId, setSessionId] = useState<number | null>(null);
+  const [handBox, setHandBox] = useState<{ x: number; y: number; w: number; h: number } | null>(null);
+
+  const [metrics, setMetrics] = useState<MetricsData>({
+    accuracy: 0,
+    confidence: 0,
+    speed: 0,
+    errorRate: 0,
+  });
+
   const [options, setOptions] = useState<DetectionOptions>({
     showConfidence: true,
     showHistory: true,
     autoCorrect: false,
     streamToApi: true,
-    confidenceThreshold: 75,
+    confidenceThreshold: 70,
   });
-  
-  const [metrics, setMetrics] = useState<MetricsData>({
-    accuracy: 92,
-    confidence: 89,
-    speed: 120,
-    errorRate: 8,
-  });
-  
-  const detectionIntervalRef = useRef<number | null>(null);
-  const { toast } = useToast();
 
-  // Cleanup detection interval on unmount
-  useEffect(() => {
-    return () => {
-      if (detectionIntervalRef.current !== null) {
-        window.clearInterval(detectionIntervalRef.current);
-      }
-    };
-  }, []);
+  const intervalRef = useRef<number | null>(null);
 
   const detectSign = useCallback(async () => {
-    if (!isDetecting) return;
+    const video = document.querySelector("video") as HTMLVideoElement | null;
+    if (!video || video.readyState < 2) return;
+
+    const start = performance.now();
+
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const blob = await new Promise<Blob | null>((resolve) =>
+      canvas.toBlob((b) => resolve(b), "image/jpeg")
+    );
+
+    if (!blob) return;
+
+    const formData = new FormData();
+    formData.append("file", blob);
 
     try {
-      const response = await apiRequest("POST", "/api/detect", {});
+      const response = await fetch("http://127.0.0.1:5000/predict", {
+        method: "POST",
+        body: formData,
+      });
       const result = await response.json();
-      
-      // Only use detections above threshold
-      if (result.confidence >= options.confidenceThreshold) {
-        setDetectedSign(result.sign);
-        
-        const newDetection: DetectionResult = {
-          sign: result.sign,
-          confidence: result.confidence,
-          timestamp: new Date(),
-        };
-        
-        setDetectionHistory(prev => [newDetection, ...prev].slice(0, 5));
-        
-        // Update metrics based on this detection
-        setMetrics(prev => ({
+
+      const end = performance.now();
+      const speed = end - start;
+
+      if (result.bbox) {
+        setHandBox(result.bbox);
+      } else {
+        setHandBox(null);
+      }
+
+      if (result.prediction && result.confidence >= options.confidenceThreshold) {
+        setDetectedSign(result.prediction);
+        setDetectionHistory((prev) => [
+          {
+            sign: result.prediction,
+            confidence: result.confidence,
+            timestamp: new Date(),
+          },
           ...prev,
-          confidence: Math.round((prev.confidence * 0.8) + (result.confidence * 0.2)),
-          speed: Math.round((prev.speed * 0.8) + (Math.random() * 40 + 100) * 0.2)
-        }));
-      }
-    } catch (error) {
-      console.error("Detection error:", error);
-      toast({
-        title: "Detection Error",
-        description: "Failed to process sign language detection.",
-        variant: "destructive",
-      });
-    }
-  }, [isDetecting, options.confidenceThreshold, toast]);
+        ].slice(0, 5));
 
-  const startDetection = useCallback(async () => {
-    try {
-      // Start a new session
-      const response = await apiRequest("POST", "/api/sessions/start", {});
-      const session = await response.json();
-      setSessionId(session.id);
-      
-      setIsDetecting(true);
-      setDetectionHistory([]);
-      
-      // Schedule regular detections
-      detectionIntervalRef.current = window.setInterval(detectSign, 1000);
-      
-      toast({
-        title: "Detection Started",
-        description: "Sign language detection is now active.",
-      });
-    } catch (error) {
-      console.error("Failed to start session:", error);
-      toast({
-        title: "Start Error",
-        description: "Failed to start detection session.",
-        variant: "destructive",
-      });
-    }
-  }, [detectSign, toast]);
-
-  const stopDetection = useCallback(async () => {
-    if (detectionIntervalRef.current !== null) {
-      window.clearInterval(detectionIntervalRef.current);
-      detectionIntervalRef.current = null;
-    }
-    
-    setIsDetecting(false);
-    
-    if (sessionId) {
-      try {
-        await apiRequest("POST", `/api/sessions/${sessionId}/end`, { metrics });
-        
-        toast({
-          title: "Detection Stopped",
-          description: "Sign language detection has been stopped.",
+        setMetrics({
+          accuracy: result.accuracy || 0,
+          confidence: result.confidence || 0,
+          speed: speed,
+          errorRate: 100 - result.accuracy || 0,
         });
-      } catch (error) {
-        console.error("Failed to end session:", error);
       }
+    } catch (error) {
+      console.error("Prediction error:", error);
     }
-  }, [sessionId, metrics, toast]);
+  }, [options.confidenceThreshold]);
 
-  const captureScreenshot = useCallback(() => {
-    toast({
-      title: "Screenshot Captured",
-      description: "Screenshot has been saved.",
+  const startDetection = () => {
+    if (intervalRef.current) return;
+    setIsDetecting(true);
+    intervalRef.current = window.setInterval(() => {
+      detectSign();
+    }, 800);
+  };
+
+  const stopDetection = () => {
+    if (intervalRef.current) {
+      window.clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
+    setIsDetecting(false);
+    setDetectedSign(null);
+    setHandBox(null);
+    setMetrics({
+      accuracy: 0,
+      confidence: 0,
+      speed: 0,
+      errorRate: 0,
     });
-  }, [toast]);
+  };
 
-  const updateOption = useCallback((option: string, value: boolean) => {
-    setOptions(prev => ({
+  const captureScreenshot = () => {
+    const video = document.querySelector("video") as HTMLVideoElement | null;
+    if (!video) return;
+    const canvas = document.createElement("canvas");
+    canvas.width = video.videoWidth;
+    canvas.height = video.videoHeight;
+    const ctx = canvas.getContext("2d");
+    if (!ctx) return;
+    ctx.drawImage(video, 0, 0, canvas.width, canvas.height);
+    const dataUrl = canvas.toDataURL("image/jpeg");
+    const link = document.createElement("a");
+    link.href = dataUrl;
+    link.download = "screenshot.jpg";
+    link.click();
+  };
+
+  const updateOption = (option: string, value: boolean) => {
+    setOptions((prev) => ({
       ...prev,
       [option]: value,
     }));
-  }, []);
+  };
 
-  const setConfidenceThreshold = useCallback((value: number) => {
-    setOptions(prev => ({
+  const setConfidenceThreshold = (value: number) => {
+    setOptions((prev) => ({
       ...prev,
       confidenceThreshold: value,
     }));
-  }, []);
+  };
 
   return {
     isDetecting,
     detectedSign,
     detectionHistory,
-    options,
     metrics,
-    sessionId,
+    options,
     startDetection,
     stopDetection,
     captureScreenshot,
     updateOption,
     setConfidenceThreshold,
+    handBox,
   };
 }

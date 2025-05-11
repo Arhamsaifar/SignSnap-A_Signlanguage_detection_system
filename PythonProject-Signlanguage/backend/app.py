@@ -3,7 +3,6 @@ from flask_cors import CORS
 from keras.models import load_model
 import cv2
 import numpy as np
-import base64
 import math
 from cvzone.HandTrackingModule import HandDetector
 
@@ -22,29 +21,40 @@ offset = 20
 @app.route('/predict', methods=['POST'])
 def predict():
     try:
-        data = request.get_json()
-        if 'image' not in data:
-            return jsonify({'error': 'No image provided'}), 400
+        file = request.files.get("file")
+        if not file:
+            return jsonify({'error': 'No file provided'}), 400
 
-        # Decode the image
-        img_data = base64.b64decode(data['image'].split(',')[1])
-        nparr = np.frombuffer(img_data, np.uint8)
-        img = cv2.imdecode(nparr, cv2.IMREAD_COLOR)
+        file_bytes = np.frombuffer(file.read(), np.uint8)
+        img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        # Hand detection
         hands, img = detector.findHands(img)
         prediction_text = "-"
         confidence = 0.0
         accuracy = 0.0
+        bbox = None
 
         if hands:
             hand = hands[0]
             x, y, w, h = hand['bbox']
-            height, width, _ = img.shape
+
+            # ✅ Ignore small detections (e.g., face or noise)
+            # Skip if detection is junk (e.g., face or too small)
+            if w < 40 or h < 40:
+                return jsonify({
+                    "prediction": "-",
+                    "confidence": 0,
+                    "accuracy": 0,
+                    "bbox": None
+                })
+
+            # Clamp box inside frame
             x1 = max(0, x - offset)
             y1 = max(0, y - offset)
-            x2 = min(x + w + offset, width)
-            y2 = min(y + h + offset, height)
+            x2 = min(x + w + offset, img.shape[1])
+            y2 = min(y + h + offset, img.shape[0])
+            w_box = x2 - x1
+            h_box = y2 - y1
 
             imgCrop = img[y1:y2, x1:x2]
             aspectRatio = h / w
@@ -63,7 +73,6 @@ def predict():
                 hGap = math.ceil((imgSize - hCal) / 2)
                 imgWhite[hGap:hCal + hGap, :] = imgResize
 
-            # Model prediction
             imgInput = cv2.resize(imgWhite, (224, 224))
             imgInput = imgInput.astype(np.float32) / 255.0
             imgInput = np.expand_dims(imgInput, axis=0)
@@ -72,13 +81,18 @@ def predict():
             index = np.argmax(prediction)
             prediction_text = labels[index]
             confidence = float(prediction[index]) * 100
-            accuracy = confidence  # You can update this if you have real accuracy logic
+            accuracy = confidence
+
 
         return jsonify({
             "prediction": prediction_text,
             "confidence": round(confidence, 2),
-            "accuracy": round(accuracy, 2)
+            "accuracy": round(accuracy, 2),
+            "bbox": {"x": x1, "y": y1, "w": w_box, "h": h_box},
+            "originalWidth": img.shape[1],
+            "originalHeight": img.shape[0]
         })
+
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500
