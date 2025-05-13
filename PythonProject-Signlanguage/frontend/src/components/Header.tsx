@@ -1,4 +1,6 @@
 import React from "react";
+import logo from "../assets/logo.png";
+
 import { HandHelping } from "lucide-react";
 
 export default function Header() {
@@ -7,8 +9,9 @@ export default function Header() {
       <div className="container mx-auto">
         <div className="flex flex-col sm:flex-row justify-between items-center">
           <div className="flex items-center mb-4 sm:mb-0 animate-float">
-            <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center mr-3 shine-effect">
-              <HandHelping className="text-background h-5 w-5" />
+            <div className="w-12 h-12 rounded-full bg-primary flex items-center justify-center mr-3 shine-effect">
+            <img src={logo} alt="Logo" />
+
             </div>
             <h1 className="text-2xl font-bold tracking-tight">
               <span className="text-white">Sign</span>

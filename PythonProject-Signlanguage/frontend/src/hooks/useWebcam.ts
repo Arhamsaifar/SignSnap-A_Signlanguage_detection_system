@@ -10,15 +10,15 @@ export function useWebcam(webcamRef: RefObject<Webcam>) {
     async function requestWebcamPermission() {
       setIsLoading(true);
       try {
-        const stream = await navigator.mediaDevices.getUserMedia({ 
+        const stream = await navigator.mediaDevices.getUserMedia({
           video: true,
-          audio: false 
+          audio: false
         });
-        
+
         // If we got here, permission was granted
         setHasPermission(true);
         setErrorMessage(null);
-        
+
         // Clean up function to stop the stream when component unmounts
         return () => {
           stream.getTracks().forEach(track => track.stop());
@@ -26,7 +26,7 @@ export function useWebcam(webcamRef: RefObject<Webcam>) {
       } catch (err) {
         console.error("Webcam access error:", err);
         setHasPermission(false);
-        
+
         if (err instanceof DOMException) {
           if (err.name === "NotAllowedError") {
             setErrorMessage("Camera access denied. Please allow camera access and refresh the page.");
