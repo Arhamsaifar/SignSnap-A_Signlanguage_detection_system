@@ -39,6 +39,13 @@ export default function WebcamFeed({
     }
   };
 
+  const scrollToOptions = () => {
+    const optionsElement = document.getElementById('options-panel');
+    if (optionsElement) {
+      optionsElement.scrollIntoView({ behavior: 'smooth' });
+    }
+  };
+
   return (
     <Card className="bg-card rounded-lg border border-primary/20 animate-fadeIn border-glow">
       <CardContent className="p-4 flex flex-col">
@@ -144,6 +151,7 @@ export default function WebcamFeed({
           <Button
             variant="outline"
             className="text-white border border-primary/50 font-bold rounded-full transition-all duration-300 flex items-center hover:bg-primary/20"
+            onClick={scrollToOptions}
           >
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>

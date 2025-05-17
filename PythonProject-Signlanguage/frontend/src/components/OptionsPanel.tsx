@@ -38,7 +38,7 @@ export default function OptionsPanel({
   };
 
   return (
-    <Card className="bg-card rounded-lg border border-primary/20 border-glow animate-fadeIn">
+    <Card id="options-panel" className="bg-card rounded-lg border border-primary/20 border-glow animate-fadeIn">
       <CardContent className="p-4">
         <h3 className="font-bold mb-4 flex items-center">
           <Settings className="h-5 w-5 mr-2 text-primary animate-float" style={{ animationDelay: '0.5s' }} />
@@ -119,7 +119,7 @@ export default function OptionsPanel({
               <p className="text-xs text-muted-foreground mt-1 ml-6">Send detections to API endpoint</p>
             </div>
           </div>
-          
+
           {/* Minimum Confidence Threshold */}
           <div className="mt-2 bg-background/70 backdrop-blur-sm rounded-lg p-4 border border-primary/10 transition-all duration-300 hover:border-primary/30 animate-fadeIn" style={{ animationDelay: '0.5s' }}>
             <div className="flex items-center justify-between mb-3">
