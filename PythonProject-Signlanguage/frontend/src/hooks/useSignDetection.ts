@@ -82,35 +82,33 @@ export function useSignDetection() {
         setHandBox(null);
       }
 
-      if (result.prediction && result.confidence >= options.confidenceThreshold) {
-        setDetectedSign(result.prediction);
-        setDetectionHistory((prev) => [
-          {
-            sign: result.prediction,
-            confidence: result.confidence,
-            timestamp: new Date(),
-          },
-          ...prev,
-        ].slice(0, 5));
+      setDetectedSign(result.prediction);
+      setDetectionHistory((prev) => [
+        {
+          sign: result.prediction,
+          confidence: result.confidence,
+          timestamp: new Date(),
+        },
+        ...prev,
+      ].slice(0, 5));
 
-        setMetrics({
-          accuracy: result.accuracy || 0,
-          confidence: result.confidence || 0,
-          speed: speed,
-          errorRate: 100 - result.accuracy || 0,
-        });
-      }
+      setMetrics({
+        accuracy: result.accuracy || 0,
+        confidence: result.confidence || 0,
+        speed: speed,
+        errorRate: 100 - result.accuracy || 0,
+      });
     } catch (error) {
       console.error("Prediction error:", error);
     }
-  }, [options.confidenceThreshold]);
+  }, []);
 
   const startDetection = () => {
     if (intervalRef.current) return;
     setIsDetecting(true);
     intervalRef.current = window.setInterval(() => {
       detectSign();
-    }, 800);
+    }, 800); // ✅ Restore original smooth polling
   };
 
   const stopDetection = () => {

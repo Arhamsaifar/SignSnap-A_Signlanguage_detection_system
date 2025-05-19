@@ -6,11 +6,27 @@ import { queryClient } from "./lib/queryClient";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { Toaster } from "@/components/ui/toaster";
 
-createRoot(document.getElementById("root")!).render(
-  <QueryClientProvider client={queryClient}>
-    <TooltipProvider>
-      <App />
-      <Toaster />
-    </TooltipProvider>
-  </QueryClientProvider>
-);
+// Performance optimization: Configure query client
+queryClient.setDefaultOptions({
+  queries: {
+    refetchOnWindowFocus: false,
+    staleTime: 300000, // 5 minutes
+  },
+});
+
+// Get root element
+const rootElement = document.getElementById("root");
+
+// Create and render app
+if (rootElement) {
+  const root = createRoot(rootElement);
+
+  root.render(
+    <QueryClientProvider client={queryClient}>
+      <TooltipProvider>
+        <App />
+        <Toaster />
+      </TooltipProvider>
+    </QueryClientProvider>
+  );
+}

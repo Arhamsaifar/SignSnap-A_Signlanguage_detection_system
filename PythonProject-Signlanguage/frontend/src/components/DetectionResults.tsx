@@ -8,19 +8,20 @@ import { DetectionResult } from "@shared/schema";
 interface DetectionResultsProps {
   detectedSign: string | null;
   detectionHistory: DetectionResult[];
+  isDetecting?: boolean; // 👈 Add this optional prop to track detection state
 }
 
-export default function DetectionResults({ detectedSign, detectionHistory }: DetectionResultsProps) {
+export default function DetectionResults({ detectedSign, detectionHistory, isDetecting }: DetectionResultsProps) {
   const handleExport = () => {
     const data = JSON.stringify(detectionHistory, null, 2);
     const blob = new Blob([data], { type: "application/json" });
     const url = URL.createObjectURL(blob);
-    
+
     const a = document.createElement("a");
     a.href = url;
     a.download = `signsnap-detection-${format(new Date(), "yyyy-MM-dd-HH-mm")}.json`;
     a.click();
-    
+
     URL.revokeObjectURL(url);
   };
 
@@ -53,7 +54,7 @@ export default function DetectionResults({ detectedSign, detectionHistory }: Det
             <Download className="h-4 w-4 mr-1" /> Export
           </Button>
         </div>
-        
+
         {/* Results Display */}
         <div className="bg-gradient-to-r from-background to-background/80 backdrop-blur-sm text-white rounded-lg p-5 mb-5 min-h-[100px] flex items-center justify-center border border-primary/30 shadow-lg shine-effect overflow-hidden">
           {detectedSign ? (
@@ -67,18 +68,18 @@ export default function DetectionResults({ detectedSign, detectionHistory }: Det
             </div>
           ) : (
             <div className="tracking-wide text-center text-muted-foreground animate-pulse">
-              WAITING FOR DETECTION
+              {isDetecting ? "👋 Raise your hand to begin detection" : "WAITING FOR DETECTION"}
             </div>
           )}
         </div>
-        
+
         {/* Recent Detection History */}
         <div className="space-y-2 mt-4">
           <h4 className="text-sm font-semibold text-primary mb-3 flex items-center">
             <History className="h-4 w-4 mr-1.5" />
             Recent Detections:
           </h4>
-          
+
           {detectionHistory.length === 0 ? (
             <div className="bg-background/60 rounded-lg p-3 text-center text-sm text-muted-foreground border border-primary/10 animate-fadeIn">
               No detections yet. Start detection to see results.
@@ -86,10 +87,10 @@ export default function DetectionResults({ detectedSign, detectionHistory }: Det
           ) : (
             <div className="space-y-2 max-h-[200px] overflow-y-auto pr-1 animate-fadeIn" style={{ animationDelay: '0.2s' }}>
               {detectionHistory.map((detection, index) => (
-                <div 
-                  key={index} 
+                <div
+                  key={index}
                   className={`rounded-lg p-3 flex justify-between text-sm border border-primary/10 transition-all hover:border-primary/30 ${index === 0 ? 'bg-primary/5' : 'bg-background/60'}`}
-                  style={{ 
+                  style={{
                     animationDelay: `${0.1 * index}s`,
                     opacity: 1 - (index * 0.15)
                   }}

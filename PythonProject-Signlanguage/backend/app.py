@@ -9,11 +9,9 @@ from cvzone.HandTrackingModule import HandDetector
 app = Flask(__name__)
 CORS(app)
 
-# Load the model and labels
 model = load_model("Model/keras_model.h5")
 labels = ["A", "B", "C", "D", "E", "F", "G", "H", "I", "K", "L", "M", "N"]
 
-# Initialize hand detector
 detector = HandDetector(maxHands=1)
 imgSize = 300
 offset = 20
@@ -28,7 +26,7 @@ def predict():
         file_bytes = np.frombuffer(file.read(), np.uint8)
         img = cv2.imdecode(file_bytes, cv2.IMREAD_COLOR)
 
-        hands, img = detector.findHands(img)
+        hands, _ = detector.findHands(img)
         prediction_text = "-"
         confidence = 0.0
         accuracy = 0.0
@@ -38,8 +36,7 @@ def predict():
             hand = hands[0]
             x, y, w, h = hand['bbox']
 
-            # ✅ Ignore small detections (e.g., face or noise)
-            # Skip if detection is junk (e.g., face or too small)
+            # (Optional: avoid small false hands)
             if w < 40 or h < 40:
                 return jsonify({
                     "prediction": "-",
@@ -48,7 +45,6 @@ def predict():
                     "bbox": None
                 })
 
-            # Clamp box inside frame
             x1 = max(0, x - offset)
             y1 = max(0, y - offset)
             x2 = min(x + w + offset, img.shape[1])
@@ -83,16 +79,16 @@ def predict():
             confidence = float(prediction[index]) * 100
             accuracy = confidence
 
+            bbox = {"x": x1, "y": y1, "w": w_box, "h": h_box}
 
         return jsonify({
             "prediction": prediction_text,
             "confidence": round(confidence, 2),
             "accuracy": round(accuracy, 2),
-            "bbox": {"x": x1, "y": y1, "w": w_box, "h": h_box},
+            "bbox": bbox,
             "originalWidth": img.shape[1],
             "originalHeight": img.shape[0]
         })
-
 
     except Exception as e:
         return jsonify({'error': str(e)}), 500

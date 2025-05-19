@@ -1,4 +1,4 @@
-import React, { useRef } from "react";
+import React, { useRef, memo, useCallback } from "react";
 import { Card, CardContent } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Play, Camera, Settings, Square, Video, AlertCircle } from "lucide-react";
@@ -14,7 +14,8 @@ interface WebcamFeedProps {
   handBox: { x: number; y: number; w: number; h: number } | null;
 }
 
-export default function WebcamFeed({
+// Use React.memo to prevent unnecessary re-renders
+function WebcamFeed({
   isDetecting,
   detectedSign,
   onStart,
@@ -25,33 +26,49 @@ export default function WebcamFeed({
   const webcamRef = useRef<Webcam>(null);
   const { hasPermission, isLoading, errorMessage } = useWebcam(webcamRef);
 
-  const handleToggleDetection = () => {
+  // Use useCallback to memoize event handlers
+  const handleToggleDetection = useCallback(() => {
     if (isDetecting) {
       onStop();
     } else {
       onStart();
     }
-  };
+  }, [isDetecting, onStart, onStop]);
 
-  const handleScreenshot = () => {
+  const handleScreenshot = useCallback(() => {
     if (webcamRef.current) {
       onScreenshot();
     }
-  };
+  }, [onScreenshot]);
 
-  const scrollToOptions = () => {
+  const scrollToOptions = useCallback(() => {
     const optionsElement = document.getElementById('options-panel');
     if (optionsElement) {
-      optionsElement.scrollIntoView({ behavior: 'smooth' });
+      // Use a more performant way to scroll
+      optionsElement.scrollIntoView({ behavior: 'auto' });
     }
-  };
+  }, []);
+
+  // Memoize the handbox style to prevent recalculations
+  const handBoxStyle = handBox ? {
+    left: `${handBox.x}px`,
+    top: `${handBox.y}px`,
+    width: `${handBox.w}px`,
+    height: `${handBox.h}px`,
+    border: "4px solid #a020f0",
+    borderRadius: "8px",
+    boxShadow: "0 0 12px 4px rgba(160, 32, 240, 0.6)",
+    transition: "transform 0.1s ease-in-out",
+    transform: "translateZ(0)", // Hardware acceleration
+    willChange: "transform", // Hint to browser for optimization
+  } : {};
 
   return (
     <Card className="bg-card rounded-lg border border-primary/20 animate-fadeIn border-glow">
       <CardContent className="p-4 flex flex-col">
         <div className="flex justify-between items-center mb-4">
           <h3 className="font-bold flex items-center">
-            <Video className="h-5 w-5 mr-2 text-primary animate-float" style={{ animationDelay: '0.1s' }} />
+            <Video className="h-5 w-5 mr-2 text-primary animate-float" />
             Webcam Feed
           </h3>
           {isDetecting && (
@@ -62,14 +79,17 @@ export default function WebcamFeed({
           )}
         </div>
 
-        <div className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4 border border-primary/30 shadow-lg">
+        <div
+          className="relative aspect-video bg-black rounded-lg overflow-hidden mb-4 border border-primary/30 shadow-lg"
+          style={{ transform: "translateZ(0)" }} // Hardware acceleration
+        >
           {isLoading ? (
             <div className="absolute inset-0 flex items-center justify-center animate-pulse">
               <p className="text-white bg-background/50 px-4 py-2 rounded-lg">Loading webcam...</p>
             </div>
           ) : !hasPermission ? (
             <div className="absolute inset-0 flex items-center justify-center flex-col p-4 animate-fadeIn">
-              <AlertCircle className="h-12 w-12 text-destructive mb-3 animate-float" />
+              <AlertCircle className="h-12 w-12 text-destructive mb-3" />
               <p className="text-white text-center mb-4 bg-background/80 p-3 rounded-lg">{errorMessage || "Camera access required"}</p>
               <Button
                 variant="default"
@@ -81,37 +101,26 @@ export default function WebcamFeed({
             </div>
           ) : (
             <>
-<Webcam
-  ref={webcamRef}
-  audio={false}
-  screenshotFormat="image/jpeg"
-  videoConstraints={{
-    facingMode: "user",
-    width: { min: 640, ideal: 1280 },
-    height: { min: 480, ideal: 720 },
-  }}
-  className="w-full h-full object-cover"
-  mirrored={true}
-  onUserMedia={() => onVideoReady()} // ✅ ADD THIS LINE
-/>
+              <Webcam
+                ref={webcamRef}
+                audio={false}
+                screenshotFormat="image/jpeg"
+                videoConstraints={{
+                  facingMode: "user",
+                  width: { min: 640, ideal: 1280 },
+                  height: { min: 480, ideal: 720 },
+                }}
+                className="w-full h-full object-cover"
+                mirrored={true}
+                style={{ transform: "translateZ(0)" }} // Hardware acceleration
+              />
 
-
-{isDetecting && handBox && (
-  <div
-    className="absolute pointer-events-none z-50"
-    style={{
-      left: `${handBox.x}px`,
-      top: `${handBox.y}px`,
-      width: `${handBox.w}px`,
-      height: `${handBox.h}px`,
-      border: "4px solid #a020f0", // bright purple
-      borderRadius: "8px",
-      boxShadow: "0 0 12px 4px rgba(160, 32, 240, 0.6)", // glowing effect
-      transition: "all 0.1s ease-in-out", // quick update, smooth
-    }}
-  />
-)}
-
+              {isDetecting && handBox && (
+                <div
+                  className="absolute pointer-events-none z-50"
+                  style={handBoxStyle}
+                />
+              )}
 
               {isDetecting && (
                 <div className="absolute inset-0 border border-primary/5 grid grid-cols-3 grid-rows-3 pointer-events-none opacity-20"></div>
@@ -120,9 +129,9 @@ export default function WebcamFeed({
           )}
         </div>
 
-        <div className="flex flex-wrap gap-3 justify-center animate-fadeIn" style={{ animationDelay: '0.3s' }}>
+        <div className="flex flex-wrap gap-3 justify-center animate-fadeIn">
           <Button
-            className={`font-bold rounded-full transition-all duration-300 flex items-center shadow-lg ${
+            className={`font-bold rounded-full transition-all duration-200 flex items-center shadow-lg ${
               isDetecting ? "bg-destructive hover:bg-destructive/90 text-white" : "bg-primary hover:bg-accent text-background"
             }`}
             onClick={handleToggleDetection}
@@ -141,7 +150,7 @@ export default function WebcamFeed({
 
           <Button
             variant="outline"
-            className="text-white border border-primary/50 font-bold rounded-full transition-all duration-300 flex items-center hover:bg-primary/20"
+            className="text-white border border-primary/50 font-bold rounded-full transition-all duration-200 flex items-center hover:bg-primary/20"
             onClick={handleScreenshot}
             disabled={!hasPermission}
           >
@@ -150,17 +159,20 @@ export default function WebcamFeed({
 
           <Button
             variant="outline"
-            className="text-white border border-primary/50 font-bold rounded-full transition-all duration-300 flex items-center hover:bg-primary/20"
+            className="text-white border border-primary/50 font-bold rounded-full transition-all duration-200 flex items-center hover:bg-primary/20"
             onClick={scrollToOptions}
           >
             <Settings className="h-4 w-4 mr-2" /> Settings
           </Button>
         </div>
 
-        <div className="mt-4 text-xs text-muted-foreground text-center p-2 bg-background/50 rounded-lg animate-fadeIn" style={{ animationDelay: '0.5s' }}>
+        <div className="mt-4 text-xs text-muted-foreground text-center p-2 bg-background/50 rounded-lg animate-fadeIn">
           <p>Webcam access is required for detection. Your privacy is important - no footage is stored.</p>
         </div>
       </CardContent>
     </Card>
   );
 }
+
+// Export memoized component to prevent unnecessary re-renders
+export default memo(WebcamFeed);

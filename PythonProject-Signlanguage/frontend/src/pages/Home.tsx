@@ -67,21 +67,20 @@ export default function Home() {
           <div className="flex flex-col space-y-6">
             <ConnectionStatus />
 
-<DetectionResults
-  detectedSign={detectedSign}
-  detectionHistory={detectionHistory}
-/>
+            <DetectionResults
+              detectedSign={detectedSign}
+              detectionHistory={detectionHistory}
+              isDetecting={isDetecting} // ✅ Added this line
+            />
 
-<AccuracyMetrics metrics={metrics} />
+            <AccuracyMetrics metrics={metrics} />
 
-<OptionsPanel
-  options={options}
-  confidenceThreshold={options.confidenceThreshold}
-  onOptionChange={updateOption}
-  onThresholdChange={setConfidenceThreshold}
-/>
-
-
+            <OptionsPanel
+              options={options}
+              confidenceThreshold={options.confidenceThreshold}
+              onOptionChange={updateOption}
+              onThresholdChange={setConfidenceThreshold}
+            />
           </div>
 
           {/* Right Column */}
