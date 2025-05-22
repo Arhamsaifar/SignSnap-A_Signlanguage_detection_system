@@ -108,7 +108,7 @@ export function useSignDetection() {
     setIsDetecting(true);
     intervalRef.current = window.setInterval(() => {
       detectSign();
-    }, 800); // ✅ Restore original smooth polling
+    }, 800); // Original interval
   };
 
   const stopDetection = () => {

@@ -1,5 +1,6 @@
 import React from "react";
 import logo from "../assets/logo.png";
+import { TextHoverEffect } from "./ui/text-hover-effect";
 
 export default function Header() {
   return (
@@ -18,12 +19,13 @@ export default function Header() {
           </div>
         </div>
 
-        {/* Main Title */}
-        <div className="mt-6 max-w-3xl mx-auto text-center">
-          <div className="title-shadow-container">
-            <h2 className="text-xl sm:text-3xl font-bold font-inter tracking-wide text-white">
-              AI-Powered Sign Language Detection Tool
-            </h2>
+        {/* Main Title with Hover Effect */}
+        <div className="mt-6 max-w-6xl mx-auto text-center">
+          <div className="title-shadow-container h-20 sm:h-24 md:h-28 lg:h-32">
+            <TextHoverEffect
+              text="AI-Powered Sign Language Detection"
+              className="w-full h-full"
+            />
           </div>
           <p className="text-muted-foreground text-sm sm:text-base animate-fadeIn mt-4" style={{ animationDelay: '0.3s' }}>
             Bridging communication gaps with real-time sign language detection. Perfect for designers
